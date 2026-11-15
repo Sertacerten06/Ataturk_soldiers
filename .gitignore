@@ -1,0 +1,17 @@
+# Gizli anahtarlar ve yerel ayarlar
+.env
+.env.*
+.dev.vars
+.wrangler/
+
+# Büyük ham veriler (README'de nereden indirileceği yazıyor)
+veri/
+*.csv.gz
+
+# Videolar ve geçici dosyalar
+*.mp4
+*.mov
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store

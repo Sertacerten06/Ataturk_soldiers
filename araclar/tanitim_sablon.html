@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ArpaSphere · nasıl çalışır</title>
+<meta name="description" content="ArpaSphere: 1953'ten bugüne gökyüzü arşivi ve SPHEREx'in 102 renkli kızılötesi verisiyle hareket eden ve değişen cisimleri bulan sistemin tanıtımı, yöntemleri, doğrulaması ve ana kodları.">
+<script>try{const t=localStorage.getItem("tema");if(t)document.documentElement.dataset.tema=t;}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Ana araçla aynı kimlik: krem atlas zemini, lacivert yazı, altın vurgu; koyu temada gece laciverti. */
+:root{
+  --bg:#f6f1e5; --bg2:#efe7d6; --panel:#fffdf8; --line:#e2d7c0; --line2:#d3c4a4;
+  --fg:#13223b; --metin:#3d4a63; --soluk:#6d7489; --vurgu:#9a6a14; --vurgu2:#7d5410;
+  --kod-bg:#fbf7ee; --kod-fg:#1d2a44; --kod-kenar:#e6dcc6; --ok:#2f7a4f; --uyari:#a4472b;
+  --serif:"Cormorant Garamond","Cormorant",Georgia,serif; --sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:14px; --golge:0 1px 0 rgba(19,34,59,.04),0 18px 40px -30px rgba(19,34,59,.35);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-tema=acik]){
+  --bg:#071224; --bg2:#0b1b34; --panel:#0e2140; --line:#1d3558; --line2:#2a4874;
+  --fg:#f3efe5; --metin:#c4cfdf; --soluk:#8fa1ba; --vurgu:#e9c27a; --vurgu2:#f0cd7a;
+  --kod-bg:#0a1830; --kod-fg:#dbe4f2; --kod-kenar:#1d3558; --ok:#7fd3a0; --uyari:#f0a58a;
+  --golge:0 18px 40px -30px rgba(0,0,0,.8); color-scheme:dark } }
+:root[data-tema=koyu]{
+  --bg:#071224; --bg2:#0b1b34; --panel:#0e2140; --line:#1d3558; --line2:#2a4874;
+  --fg:#f3efe5; --metin:#c4cfdf; --soluk:#8fa1ba; --vurgu:#e9c27a; --vurgu2:#f0cd7a;
+  --kod-bg:#0a1830; --kod-fg:#dbe4f2; --kod-kenar:#1d3558; --ok:#7fd3a0; --uyari:#f0a58a;
+  --golge:0 18px 40px -30px rgba(0,0,0,.8); color-scheme:dark }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--vurgu)} a:hover{color:var(--vurgu2)}
+:focus-visible{outline:2px solid var(--vurgu);outline-offset:3px;border-radius:4px}
+.ic{max-width:1120px;margin:0 auto;padding:0 20px}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+.ust{font:500 11.5px/1.4 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--vurgu);display:flex;align-items:center;gap:12px}
+.ust::before{content:"";width:28px;height:1px;background:currentColor;opacity:.7}
+h2{font:600 clamp(30px,3.6vw,44px)/1.08 var(--serif);letter-spacing:-.01em}
+h3{font:600 15.5px/1.35 var(--sans)}
+.giris-yazi{color:var(--metin);max-width:64ch;font-size:16.5px}
+code{font-family:var(--mono);font-size:.86em}
+
+/* Üst çubuk */
+.cubuk{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.cubuk .ic{display:flex;align-items:center;gap:18px;height:60px}
+.marka{font:600 21px/1 var(--serif);color:var(--fg);text-decoration:none;white-space:nowrap}
+.marka span{color:var(--vurgu);font-style:italic}
+.cubuk nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+.cubuk nav::-webkit-scrollbar{display:none}
+.cubuk nav a{color:var(--metin);text-decoration:none;font-size:13.5px;padding:6px 10px;border-radius:8px;white-space:nowrap}
+.cubuk nav a:hover{color:var(--fg);background:var(--bg2)}
+.dug{display:inline-flex;align-items:center;gap:8px;border-radius:10px;padding:9px 16px;font:600 14px var(--sans);text-decoration:none;border:1px solid var(--line2);background:var(--panel);color:var(--fg);cursor:pointer;white-space:nowrap}
+.dug:hover{border-color:var(--vurgu);color:var(--fg)}
+.dug.ana{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.dug.ana:hover{background:var(--vurgu2);border-color:var(--vurgu2);color:var(--bg)}
+.tema{padding:8px 11px}
+@media (max-width:1180px){.cubuk nav{display:none}.cubuk .tema{margin-left:auto}}
+
+/* Giriş */
+.kahraman{padding:56px 0 40px}
+.kahraman .ic{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:48px;align-items:center}
+.kahraman h1{font:600 clamp(42px,5.6vw,72px)/1 var(--serif);letter-spacing:-.018em;margin:18px 0 20px}
+.kahraman h1 em{font-style:italic;color:var(--vurgu)}
+.eylem{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:26px}
+.qr{display:inline-flex;align-items:center;gap:10px;margin-left:6px}.qr small{font-size:13px;opacity:.8;max-width:7ch;line-height:1.25}
+@media (max-width:700px){.qr{display:none}}
+.sayilar{list-style:none;margin:34px 0 0;padding:22px 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.sayilar b{display:block;font:600 clamp(26px,2.6vw,34px)/1 var(--serif);font-variant-numeric:lining-nums}
+.sayilar span{display:block;margin-top:6px;font-size:12.5px;line-height:1.35;color:var(--soluk)}
+@media (max-width:980px){.kahraman .ic{grid-template-columns:1fr}.sayilar{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Gerçek Barnard kareleri */
+.plak{position:relative;background:#000;border-radius:var(--r);overflow:hidden;box-shadow:var(--golge),0 0 0 1px var(--line)}
+.plak-ic{position:relative;aspect-ratio:1}
+.plak img{position:absolute;inset:0;width:100%;height:100%;opacity:0;user-select:none}
+.plak img.on{opacity:1}
+.plak img.sol{opacity:1;z-index:1;clip-path:inset(0 calc(100% - var(--x,50%)) 0 0)}
+.plak svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.plak .etiket{position:absolute;left:12px;top:12px;z-index:3;font:500 12.5px var(--mono);color:#f1e6c8;background:rgba(6,9,14,.72);border:1px solid rgba(212,166,74,.4);padding:5px 9px;border-radius:7px}
+.plak .etiket b{color:#ecc777;font:600 15px var(--serif);margin-right:4px}
+.plak-alt{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--panel);border-top:1px solid var(--line)}
+.plak-alt p{font-size:13px;color:var(--metin)}
+.secim{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden}
+.secim button{all:unset;cursor:pointer;padding:6px 12px;font:500 13px var(--sans);color:var(--metin)}
+.secim button[aria-pressed=true]{background:var(--fg);color:var(--bg)}
+.secim button:focus-visible{outline:2px solid var(--vurgu);outline-offset:-2px}
+.kaydir-r{width:100%;margin:0;display:none}
+.plak.kaydir .kaydir-r{display:block}
+.plak.kaydir .plak-ic{cursor:ew-resize;touch-action:none}
+figcaption{margin-top:10px;font-size:12.5px;color:var(--soluk)}
+
+/* Bölümler */
+section.bolum{padding:72px 0;border-top:1px solid var(--line)}
+section.bolum:nth-of-type(even){background:var(--bg2)}
+.bas{display:grid;gap:14px;margin-bottom:34px;max-width:780px}
+.kartlar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.kart{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px 20px 18px;display:grid;gap:8px;align-content:start;box-shadow:var(--golge)}
+.kart .k{font:500 12px/1 var(--mono);color:var(--vurgu)}
+.kart p{font-size:14.5px;color:var(--metin);line-height:1.55}
+.kart.yeni{position:relative}
+.kart.yeni::after{content:"yeni";position:absolute;top:16px;right:16px;font:600 11px var(--mono);color:var(--ok);border:1px solid currentColor;border-radius:99px;padding:1px 8px}
+.ek{margin-top:18px;font-size:14px;color:var(--soluk)}
+@media (max-width:980px){.kartlar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.kartlar{grid-template-columns:1fr}}
+
+/* Yenilikler */
+.surum{list-style:none;margin:0;padding:0;display:grid;gap:0;border-left:2px solid var(--line2);margin-left:6px}
+.surum li{position:relative;padding:0 0 20px 26px}
+.surum li::before{content:"";position:absolute;left:-7px;top:7px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--vurgu)}
+.surum b{font-weight:600}
+.surum span{display:block;color:var(--metin);font-size:14.5px}
+.iki{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start}
+@media (max-width:900px){.iki{grid-template-columns:1fr}}
+
+/* Mimari */
+.mimari{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:stretch}
+.katman{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:10px;align-content:start;box-shadow:var(--golge)}
+.katman .k{font:500 12px var(--mono);color:var(--vurgu)}
+.katman ul{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:13.5px;color:var(--metin)}
+.katman li code{color:var(--fg)}
+.ok{display:grid;place-items:center;color:var(--vurgu);font:400 26px var(--serif)}
+@media (max-width:900px){.mimari{grid-template-columns:1fr}.ok{transform:rotate(90deg);height:28px}}
+.akis{list-style:none;margin:34px 0 0;padding:0;display:grid;gap:10px;counter-reset:a}
+.akis li{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:baseline;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.akis .z{font:500 13px var(--mono);color:var(--vurgu)}
+.akis span{color:var(--metin);font-size:14.5px}
+.akis b{color:var(--fg);font-weight:600}
+@media (max-width:560px){.akis li{grid-template-columns:1fr;gap:4px}}
+
+/* Tablolar */
+.tablo{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--golge)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12.5px var(--sans);color:var(--soluk);background:color-mix(in srgb,var(--bg2) 60%,transparent)}
+tr:last-child td{border-bottom:0}
+td.sayi{font-variant-numeric:tabular-nums;white-space:nowrap}
+.e{color:var(--ok);font-weight:600} .h{color:var(--uyari);font-weight:600}
+.adimlar{list-style:none;margin:0 0 30px;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;counter-reset:s}
+.adimlar li{counter-increment:s;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:14px;color:var(--metin);display:grid;gap:6px;align-content:start}
+.adimlar li::before{content:counter(s);font:600 26px/1 var(--serif);color:var(--vurgu)}
+.adimlar b{color:var(--fg)}
+@media (max-width:900px){.adimlar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.adimlar{grid-template-columns:1fr}}
+.not{margin-top:16px;font-size:14px;color:var(--metin);border-left:3px solid var(--vurgu);padding:4px 0 4px 14px}
+.olcumler{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:30px}
+.olcum{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:4px}
+.olcum b{font:600 22px/1.15 var(--serif)}
+.olcum span{font-size:14px;color:var(--metin)}
+@media (max-width:700px){.olcumler{grid-template-columns:1fr}}
+
+/* Kodlar */
+.kodlar{display:grid;gap:18px}
+.kod{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--golge)}
+.kod header{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:16px 20px 0}
+.kod .dosya{font:500 12px var(--mono);color:var(--vurgu);background:color-mix(in srgb,var(--vurgu) 10%,transparent);padding:2px 8px;border-radius:6px}
+.kod>p{padding:8px 20px 14px;font-size:14.5px;color:var(--metin);max-width:90ch}
+.kod pre{margin:0;padding:16px 20px;background:var(--kod-bg);border-top:1px solid var(--kod-kenar);overflow-x:auto;font:12.5px/1.6 var(--mono);color:var(--kod-fg);tab-size:2;max-height:420px}
+
+/* Hız, sınırlar, kaynaklar */
+.hizlar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.hiz{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:6px}
+.hiz b{font:600 34px/1 var(--serif);font-variant-numeric:lining-nums}
+.hiz span{font-size:13.5px;color:var(--metin)}
+@media (max-width:900px){.hizlar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.liste{margin:0;padding:0 0 0 20px;display:grid;gap:10px;color:var(--metin);font-size:15px}
+.liste b{color:var(--fg)}
+footer{padding:40px 0 56px;border-top:1px solid var(--line);font-size:13px;color:var(--soluk)}
+footer .ic{display:grid;gap:8px}
+.gizli{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Alet katmanı: ana araçla aynı sade görünüm (IBM Plex, 4 px köşe, gölgesiz, tek vurgu). */
+:root{--bg:#f7f7f5;--bg2:#eef0f2;--panel:#fff;--line:#dcdfe3;--line2:#b9bfc7;--fg:#15181d;--metin:#3b424c;--soluk:#5f6772;--vurgu:#1a4480;--vurgu2:#112e51;
+  --kod-bg:#f7f8f9;--kod-fg:#1b2230;--kod-kenar:#dcdfe3;--serif:"IBM Plex Sans",system-ui,sans-serif;--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--r:4px;--golge:none}
+@media (prefers-color-scheme:dark){ :root:not([data-tema=acik]){--bg:#0b111c;--bg2:#101826;--panel:#111a28;--line:#1f2a3b;--line2:#33435a;--fg:#eef1f5;--metin:#b9c3d0;--soluk:#8a96a6;--vurgu:#8db7f0;--vurgu2:#b5d0f6;--kod-bg:#0d1522;--kod-fg:#dbe3ee;--kod-kenar:#1f2a3b;--golge:none} }
+:root[data-tema=koyu]{--bg:#0b111c;--bg2:#101826;--panel:#111a28;--line:#1f2a3b;--line2:#33435a;--fg:#eef1f5;--metin:#b9c3d0;--soluk:#8a96a6;--vurgu:#8db7f0;--vurgu2:#b5d0f6;--kod-bg:#0d1522;--kod-fg:#dbe3ee;--kod-kenar:#1f2a3b;--golge:none}
+.ust{font:500 12.5px/1.4 var(--mono);letter-spacing:0;text-transform:none;color:var(--soluk)}
+.ust::before{display:none}
+h2{font:600 clamp(22px,2.4vw,30px)/1.2 var(--sans);letter-spacing:-.01em}
+.kahraman h1{font:600 clamp(30px,3.6vw,46px)/1.12 var(--sans);letter-spacing:-.015em}
+.kahraman h1 em,.marka span{font-style:normal;color:inherit}
+.marka{font:600 18px/1 var(--sans)}
+.dug,.akis li,.adimlar li,.olcum,.hiz,.cubuk nav a{border-radius:4px}
+.dug{font:500 14px var(--sans)}
+.sayilar b,.olcum b,.hiz b{font-family:var(--mono);font-weight:600}
+.sayilar b{font-size:19px;white-space:nowrap;margin-bottom:3px}
+.olcum b{font-size:19px}
+.hiz b{font-size:26px}
+.adimlar li::before{font:600 15px/1 var(--mono)}
+.ok{font-family:var(--sans)}
+.kart.yeni::after{border-radius:3px}
+.plak .etiket b{font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<header class="cubuk">
+  <div class="ic">
+    <a class="marka" href="#">ArpaSphere</a>
+    <nav aria-label="Bölümler">
+      <a href="#ne">Ne yapar</a><a href="#yeni">Yenilikler</a><a href="#nasil">Nasıl çalışır</a><a href="#tarama">Otomatik tarama</a><a href="#dogrulama">Doğrulama</a><a href="#kodlar">Ana kodlar</a><a href="#hiz">Hız</a><a href="#sinirlar">Sınırlar</a>
+    </nav>
+    <button class="dug tema" id="temaBtn" type="button" aria-label="Açık / koyu tema">◐</button>
+    <a class="dug ana" href="https://sphere.arpama.tr/" target="_blank" rel="noopener">Aracı aç ↗</a>
+  </div>
+</header>
+
+<main>
+<section class="kahraman" aria-labelledby="baslik">
+  <div class="ic">
+    <div>
+      <p class="ust">SPHEREx · 102 renkte kızılötesi · 1953'ten bugüne</p>
+      <h1 id="baslik">ArpaSphere: 1953–2026 gökyüzü arşivinde hareket ve değişim</h1>
+      <p class="giris-yazi">ArpaSphere, aynı gökyüzü noktasının 1953'ten bugüne çekilmiş fotoğraflarını ve SPHEREx teleskobunun 102 renkli kızılötesi karelerini üst üste oynatır. Sabit yıldızlar yerinde durur, yakın ve hızlı bir yıldız zıplar. Sistem hareketi kendisi ölçer, Gaia ile sınar ve cismin spektrumundan neyden yapıldığını çıkarır.</p>
+      <div class="eylem">
+        <a class="dug ana" href="https://sphere.arpama.tr/" target="_blank" rel="noopener">Aracı aç ↗</a>
+        <span class="qr" title="Telefonla tara: araç açılır"><span style="background:#fff;padding:6px;border-radius:6px;line-height:0;display:inline-block"><svg width="132" height="132" role="img" aria-label="Aracın QR kodu" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 27" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h27v27H0z"/><path stroke="#0b1a30" d="M1 1.5h7m1 0h1m2 0h1m2 0h1m1 0h1m1 0h7M1 2.5h1m5 0h1m1 0h1m1 0h1m1 0h1m1 0h1m3 0h1m5 0h1M1 3.5h1m1 0h3m1 0h1m2 0h1m3 0h1m1 0h2m1 0h1m1 0h3m1 0h1M1 4.5h1m1 0h3m1 0h1m1 0h3m2 0h4m1 0h1m1 0h3m1 0h1M1 5.5h1m1 0h3m1 0h1m2 0h1m1 0h1m2 0h3m1 0h1m1 0h3m1 0h1M1 6.5h1m5 0h1m2 0h5m4 0h1m5 0h1M1 7.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M9 8.5h3m1 0h1M1 9.5h1m1 0h2m1 0h3m1 0h4m1 0h1m1 0h1m1 0h1m2 0h1m1 0h2M1 10.5h5m3 0h1m4 0h1m2 0h2m1 0h1m3 0h1M1 11.5h2m1 0h2m1 0h5m6 0h1m1 0h1M2 12.5h1m1 0h2m3 0h8m3 0h1m1 0h2M1 13.5h1m1 0h2m1 0h2m1 0h1m1 0h1m1 0h3m2 0h4m1 0h3M2 14.5h1m1 0h1m1 0h1m1 0h2m2 0h2m1 0h2m1 0h4m3 0h1M2 15.5h2m1 0h1m1 0h4m1 0h1m1 0h1m4 0h1m1 0h1m1 0h2M1 16.5h1m4 0h1m1 0h1m2 0h2m2 0h3m1 0h3m3 0h1M4 17.5h1m2 0h2m5 0h2m1 0h9M9 18.5h2m6 0h1m3 0h1m1 0h1m1 0h1M1 19.5h7m1 0h3m2 0h2m1 0h1m1 0h1m1 0h1m1 0h3M1 20.5h1m5 0h1m1 0h2m2 0h1m1 0h3m3 0h1M1 21.5h1m1 0h3m1 0h1m2 0h1m1 0h1m2 0h1m1 0h6m2 0h1M1 22.5h1m1 0h3m1 0h1m1 0h5m1 0h5m1 0h5M1 23.5h1m1 0h3m1 0h1m1 0h2m1 0h1m5 0h2m1 0h1m1 0h2M1 24.5h1m5 0h1m3 0h2m1 0h1m1 0h1m1 0h1m2 0h1m1 0h1M1 25.5h7m1 0h3m2 0h2m2 0h8"/></svg>
+</span><small>Telefonla tara</small></span>
+        <a class="dug" href="#nasil">Nasıl çalışır</a>
+      </div>
+      <ul class="sayilar" aria-label="Kısaca">
+        <li><b>156 bin</b><span>yıldız ve kahverengi cüce aranabilir</span></li>
+        <li><b>102</b><span>SPHEREx rengi, 0,75–5 µm</span></li>
+        <li><b>73 yıl</b><span>fotoğraf arşivi, 1953–2026</span></li>
+        <li><b>151</b><span>SPHEREx planlama periyodu izleniyor</span></li>
+        <li><b>4</b><span>uzay görevi: SPHEREx, Gaia, WISE, NEOSSat</span></li>
+      </ul>
+    </div>
+    <figure style="margin:0">
+      <div class="plak" id="plak">
+        <div class="plak-ic" id="plakIc">
+          {{KARELER}}
+          <svg viewBox="0 0 512 512" id="katman" aria-hidden="true"></svg>
+          <div class="etiket" id="etiket" aria-live="off"></div>
+        </div>
+        <div class="plak-alt">
+          <div class="secim" role="group" aria-label="Görünüm">
+            <button type="button" data-m="blink" aria-pressed="true">Göz kırp</button><button type="button" data-m="kaydir" aria-pressed="false">Kaydır</button>
+          </div>
+          <p id="plakNot">Barnard Yıldızı · yılda 10,4″ kuzeye</p>
+          <label class="gizli" for="kaydirR">Ayırıcının yeri</label>
+          <input class="kaydir-r" type="range" id="kaydirR" min="0" max="100" value="50">
+        </div>
+      </div>
+      <figcaption>Gerçek kareler, sistemin kendi çıktısı: POSS-I (1953), DSS2 (1993) ve SPHEREx (2026), 20′ alan, kuzey yukarıda. Kesikli çizgi yıldızın beklenen yolu.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="bolum" id="ne" aria-labelledby="neH">
+  <div class="ic">
+    <div class="bas">
+      <p class="ust">Ne yapar</p>
+      <h2 id="neH">Blink yöntemi, SPHEREx verisiyle</h2>
+      <p class="giris-yazi">Blink karşılaştırıcısı farklı gecelerde çekilmiş iki fotoğraf plağını hızla değiştirerek gösteren bir alettir; Plüton 1930'da böyle bulundu. Bu proje aynı fikri tarayıcıya taşır ve 70 yılı aşan arşivi NASA'nın 2025'te gözleme başlayan SPHEREx teleskobuyla birleştirir. Kurulum gerekmez: ön yüz tek bir HTML dosyası, arka uç tek bir Cloudflare Worker.</p>
+    </div>
+    <div class="kartlar">
+      <article class="kart"><span class="k">Blink · Fark · Toplam</span><h3>Göz kırp, farkını al, üst üste koy</h3><p>Kareler sırayla oynar; fark modunda yeni konum turuncu, eski konum mavi; toplamda hareket renkli bir iz bırakır.</p></article>
+      <article class="kart yeni"><span class="k">Kaydır</span><h3>1953 ile bugün yan yana</h3><p>Solda eski fotoğraf, sağda bugünkü SPHEREx karesi. Ayırıcıyı sürükledikçe yıldızın kayması gözle görülür.</p></article>
+      <article class="kart yeni"><span class="k">Otomatik tarama</span><h3>Hareket edeni makine bulsun</h3><p>Alandaki her yıldız SPHEREx karelerinde izlenir; hareket eden bulunur ve Gaia DR3 ile otomatik sınanır.</p></article>
+      <article class="kart yeni"><span class="k">Ölçüm</span><h3>Hızı kendimiz ölçeriz</h3><p>Hedefin her karedeki yeri bulunup hızı katalogla karşılaştırılır; 2050'de nerede olacağı ve dolunay çapı kadar yolu kaç yılda aldığı hesaplanır.</p></article>
+      <article class="kart"><span class="k">Spektrum</span><h3>102 renkte ölçüm</h3><p>Görüntüye tıklanan noktanın akısı her SPHEREx görüntüsünde ayrı ölçülür: spektrum, ışık eğrisi ve periyot çıkar.</p></article>
+      <article class="kart"><span class="k">Tür ve bileşim</span><h3>K0'dan T7,5'e, su ve metan</h3><p>Spektrum türü bilinen 65 yıldız ve cüceden kurulan şablonlarla karşılaştırılır; su, metan ve CO bantlarının derinliği ölçülür.</p></article>
+      <article class="kart"><span class="k">Asteroitler</span><h3>Bilinen cisimler işaretli</h3><p>Her SPHEREx karesinde, çekim anında alanda olan bilinen asteroit ve kuyruklu yıldızlar IMCCE SkyBoT'tan alınıp çizilir.</p></article>
+      <article class="kart"><span class="k">Keşif</span><h3>Bilinmeyeni ara, sahtesini ele</h3><p>CatWISE'ta hızlı görünen kaynaklar Gaia DR3 ve SIMBAD ile karşılaştırılır; kalanlar SPHEREx'le sınanır.</p></article>
+      <article class="kart yeni"><span class="k">Canlı arşiv</span><h3>Her hafta gelen yeni veri</h3><p>IRSA'ya yüklenen en yeni planlama periyodu, dosya ve pozlama; arşiv 30 dakikada bir kendiliğinden taranır.</p></article>
+    </div>
+    <p class="ek">Ayrıca: NEOSSat ve CADC görüntüleri, Aladin Lite gökyüzü atlası, GIF ve PNG indirme, paylaşılabilir bağlantı, kendi kendine oynayan 1 dakikalık tur, Kolay/Uzman modu, Türkçe/İngilizce, açık/koyu tema.</p>
+  </div>
+</section>
+
+<section class="bolum" id="yeni" aria-labelledby="yeniH">
+  <div class="ic iki">
+    <div class="bas" style="margin:0">
+      <p class="ust">14 Kasım 2026 sürümü</p>
+      <h2 id="yeniH">Bu sürümde değişenler</h2>
+      <p class="giris-yazi">55 benzer projeyle yapılan kıyaslamada eksik çıkan her şey eklendi; en büyük zayıflık olan yavaşlığın asıl sebebi bulunup giderildi.</p>
+    </div>
+    <ol class="surum">
+      <li><b>Hız: hatanın kaynağı bulundu.</b><span>Worker, IRSA'nın 330 KB'lık listesini karakter karakter okurken Cloudflare'in işlem süresi sınırını aşıyordu (hata 1102). Satır bazlı okuma 10 kat hızlı; yükleme 12–23 sn, hata yok.</span></li>
+      <li><b>Önce eski fotoğraflar.</b><span>Arşiv taramaları ~2 sn'de ekrana gelir, SPHEREx kareleri arkadan eklenir.</span></li>
+      <li><b>SPHEREx DR1 uyumu.</b><span>IRSA'nın yeni <code>dr1</code> klasörleri ve <code>l2b_retry</code> dosyaları tanınıyor; spektrumda 240/240 ölçüm.</span></li>
+      <li><b>Kaydır modu ve otomatik tarama.</b><span>Ayırıcıyla karşılaştırma; yıldız izleme ve Gaia DR3 doğrulaması.</span></li>
+      <li><b>2050 tahmini ve canlı arşiv.</b><span>Yıldızın gelecekteki yeri görüntüde; IRSA'nın haftalık yüklemeleri sayfada.</span></li>
+      <li><b>Gerçek gökyüzü haritası.</b><span>Girişte SPHEREx DR1'den üretilmiş tüm gökyüzü Mollweide haritası.</span></li>
+      <li><b>İlk dakika.</b><span>"Bunu dene" senaryoları, kendi kendine oynayan tur, PNG indirme, açık "aday" ve "simülasyon" etiketleri.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="bolum" id="nasil" aria-labelledby="nasilH">
+  <div class="ic">
+    <div class="bas">
+      <p class="ust">Nasıl çalışır</p>
+      <h2 id="nasilH">Hesap tarayıcıda, arşiv erişimi Cloudflare Worker'da</h2>
+      <p class="giris-yazi">Arşivlerin çoğu tarayıcıdan doğrudan okunmaya izin vermez (CORS). Worker bu yüzden ince bir ara katman: isteği doğrular, arşivden yalnız gereken baytları alır, sonucu önbelleğe koyar. Görüntü işleme, hizalama, yığma, tarama ve spektrum tarayıcıda yapılır.</p>
+    </div>
+    <div class="mimari">
+      <div class="katman"><span class="k">Tarayıcı</span><h3>Tek HTML dosyası</h3>
+        <ul><li>FITS okuma, TAN-SIP ile kuzey-yukarı ızgaraya örnekleme</li><li>Bayraklı pikselleri maskeleme, dönem dönem yığma</li><li>Blink, fark, toplam, kaydır</li><li>Yıldız izleme, hareket ölçümü, spektrum, tür</li><li>156 bin yıldızlık katalog (HYG, Gaia ≤50 pc, UltracoolSheet)</li></ul></div>
+      <div class="ok" aria-hidden="true">⇄</div>
+      <div class="katman"><span class="k">Cloudflare Worker</span><h3>İnce ara katman</h3>
+        <ul><li><code>/api/spherex/ara</code> görüntü listesi</li><li><code>/api/spherex/kesit</code> S3'ten kesit</li><li><code>/api/spherex/foto</code> fotometri</li><li><code>/api/katalog</code>, <code>/api/kesif</code> Gaia, CatWISE</li><li><code>/api/skybot</code>, <code>/api/canli</code>, <code>/api/cadc</code></li></ul></div>
+      <div class="ok" aria-hidden="true">⇄</div>
+      <div class="katman"><span class="k">Arşivler</span><h3>Açık veri</h3>
+        <ul><li>NASA/IPAC IRSA: SIA, S3 deposu, TAP (Gaia DR3, CatWISE2020)</li><li>STScI: DSS, Pan-STARRS</li><li>IMCCE SkyBoT, SIMBAD</li><li>CADC: NEOSSat ve diğer teleskoplar</li></ul></div>
+    </div>
+    <ol class="akis" aria-label="Barnard Yıldızı seçildiğinde">
+      <li><span class="z">0 sn</span><span><b>Barnard Yıldızı seçilir.</b> Ad tarayıcıdaki katalogda bulunur; konum öz hareketle her taramanın yılına taşınır.</span></li>
+      <li><span class="z">~2 sn</span><span><b>Eski fotoğraflar ekranda.</b> 1953 POSS-I, 1993 DSS2 ve 2012 Pan-STARRS gelir; oynatılabilir.</span></li>
+      <li><span class="z">aynı anda</span><span><b>SPHEREx listesi.</b> Worker IRSA'dan o noktayı kapsayan görüntüleri alır (Barnard için 360 görüntü).</span></li>
+      <li><span class="z">6–12 sn</span><span><b>SPHEREx kareleri.</b> Her dönemden en fazla 12 görüntünün yalnız gereken satırları okunur, maskelenip toplanır: 8 dönem.</span></li>
+      <li><span class="z">ardından</span><span><b>Ölçüm.</b> Hareket ölçülür, spektrum çıkar (240 ölçüm), bilinen asteroitler işaretlenir; istenirse otomatik tarama çalışır.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="bolum" id="tarama" aria-labelledby="taramaH">
+  <div class="ic">
+    <div class="bas">
+      <p class="ust">Otomatik tarama</p>
+      <h2 id="taramaH">Hareketli kaynak taraması: dört adım</h2>
+      <p class="giris-yazi">Bütün SPHEREx kareleri aynı ızgarada. Tarama yalnız SPHEREx karelerini kullanır, çünkü farklı teleskopların farklı renkleri sahte "hareket" üretir. Yaklaşık 0,3 saniye sürer.</p>
+    </div>
+    <ol class="adimlar">
+      <li><b>Yıldızları bul.</b>Bütün karelerin medyan görüntüsünde parlak tepeler; aynı yıldızın birden çok tepesi birleştirilir.</li>
+      <li><b>Her karede izle.</b>Ağırlık merkezi yalnız tepenin yarısından parlak piksellerle; pencere yıldızın büyüklüğüne göre.</li>
+      <li><b>Doğru uydur.</b>Konum zamana göre, kare derinliğiyle ağırlıklı. En az 4σ ve 2″/yıl değilse aday sayılmaz.</li>
+      <li><b>Gaia ile sına.</b>Gaia DR3 konumları taramanın tarihine taşınır; 12″ içindeki en parlak kaynağın hareketiyle karşılaştırılır.</li>
+    </ol>
+    <div class="tablo">
+      <table>
+        <thead><tr><th>Alan</th><th>Taramanın bulduğu (yalnız SPHEREx)</th><th>Katalog</th><th>Gaia DR3 sınaması</th></tr></thead>
+        <tbody>
+          <tr><td>Barnard Yıldızı</td><td class="sayi">10,4 ± 0,8″/yıl, 357°</td><td class="sayi">10,39″/yıl, 356°</td><td><span class="e">doğruluyor</span></td></tr>
+          <tr><td>Barnard alanı, ikinci aday</td><td class="sayi">5,1 ± 1,2″/yıl, 210°</td><td>—</td><td><span class="h">hareketsiz</span>: yanlış alarm olarak işaretlendi</td></tr>
+          <tr><td>Kapteyn Yıldızı</td><td class="sayi">8,8 ± 0,7″/yıl, 127°</td><td class="sayi">8,67″/yıl, 131°</td><td>katalogla uyumlu</td></tr>
+          <tr><td>61 Cygni A</td><td class="sayi">4,1 ± 0,9″/yıl, 58°</td><td class="sayi">5,28″/yıl, 52°</td><td><span class="e">doğruluyor</span> (5,3″/yıl)</td></tr>
+          <tr><td>61 Cygni B</td><td class="sayi">4,0 ± 0,6″/yıl, 61°</td><td>tarama kendi buldu</td><td><span class="e">doğruluyor</span> (5,2″/yıl)</td></tr>
+          <tr><td>Vega (kontrol)</td><td>hareket bulunmadı</td><td class="sayi">0,35″/yıl</td><td>beklenen: SPHEREx'in ayırabileceğinden yavaş</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="not">Yalnız tek dönemde görünen kaynaklar listelenmez: bir dönemin görüntüleri günlere yayıldığı için gerçek bir asteroit toplamda keskin bir nokta bırakamaz. Bunlar çoğunlukla SPHEREx'in hayalet görüntüleri; yalnız bilinen bir asteroitle eşleşenler gösterilir. Bulunan her şey "aday"dır, doğrulanmış keşif değildir.</p>
+  </div>
+</section>
+
+<section class="bolum" id="dogrulama" aria-labelledby="dogH">
+  <div class="ic">
+    <div class="bas">
+      <p class="ust">Doğrulama</p>
+      <h2 id="dogH">Bilinen değerlerle karşılaştırma</h2>
+      <p class="giris-yazi">Her yöntem önce sonucu bilinen cisimlerde denendi.</p>
+    </div>
+    <div class="olcumler">
+      <div class="olcum"><b>26 / 27 yıldız</b><span>Hızı bilinen yıldızlarda yalnız SPHEREx'ten ölçülen hız, katalogla 2σ içinde; ortanca fark %11, yön farkı 7°, r = 0,91. <a href="https://sphere.arpama.tr/bulgular.html#karne">Doğruluk karnesi →</a></span></div>
+      <div class="olcum"><b>11,0 ± 0,5″/yıl</b><span>Barnard, 1953–2026 bütün kareler; katalog 10,39 (%6 fark).</span></div>
+      <div class="olcum"><b>±0,89 alt tür</b><span>M cücelerinde SPHEREx tür tahmini (65 referans); L/T cücelerinde ±2,6, L/T ayrımı 22/26 doğru.</span></div>
+      <div class="olcum"><b>30,5 gün</b><span>HV 1002 (Büyük Macellan Bulutu'nda bir Sefeid) periyodu SPHEREx'ten; bilinen 30,48 gün.</span></div>
+      <div class="olcum"><b>ρ = 0,69</b><span>94 T/Y cücesinde ölçülen metan bandı ile katalog T alt türü (47 güvenilir ölçüm).</span></div>
+      <div class="olcum"><b>%3</b><span>ε Indi B'nin SPHEREx'ten ölçülen J akısı ile katalog değeri arasındaki fark.</span></div>
+      <div class="olcum"><b>100 bölge</b><span>33 237 kaynak, 211 tür tahmini (%72'si Gaia rengiyle uyumlu), 39 hale yıldızı adayı. Yeni cisim bulunmadı.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="bolum" id="kodlar" aria-labelledby="kodH">
+  <div class="ic">
+    <div class="bas">
+      <p class="ust">Ana kodlar</p>
+      <h2 id="kodH">Kaynak koddan seçmeler</h2>
+      <p class="giris-yazi">Aşağıdaki parçalar yayındaki dosyalardan otomatik alınır, kısaltılmamıştır.</p>
+    </div>
+    <div class="kodlar">
+{{KODLAR}}
+    </div>
+  </div>
+</section>
+
+<section class="bolum" id="hiz" aria-labelledby="hizH">
+  <div class="ic">
+    <div class="bas">
+      <p class="ust">Hız ve güvenilirlik</p>
+      <h2 id="hizH">Süre ve boyut ölçümleri</h2>
+    </div>
+    <div class="hizlar">
+      <div class="hiz"><b>2,4 ms</b><span>SPHEREx listesini işleme süresi (önce 25,7 ms; sınır 10 ms)</span></div>
+      <div class="hiz"><b>~2 sn</b><span>ilk karelerin ekrana gelmesi</span></div>
+      <div class="hiz"><b>12–23 sn</b><span>bütün kareler: Barnard 12 sn, önbellekte olmayan bir yıldız 23 sn</span></div>
+      <div class="hiz"><b>0</b><span>hata, 84–86 isteklik iki denemede</span></div>
+    </div>
+    <p class="not">Kesitler 30 gün, görüntü listesi 1 saat, canlı arşiv 30 dakika önbellekte. Worker yalnız belirli arşiv adreslerine gider; kullanıcıdan gelen adres ve sayılar denetlenir. Hesap yoktur, kişisel veri toplanmaz.</p>
+  </div>
+</section>
+
+<section class="bolum" id="sinirlar" aria-labelledby="sinirH">
+  <div class="ic iki">
+    <div class="bas" style="margin:0">
+      <p class="ust">Sınırlar</p>
+      <h2 id="sinirH">Bilinen sınırlar</h2>
+      <p class="giris-yazi">Sonuçları doğru okumak için bilmen gerekenler.</p>
+    </div>
+    <ul class="liste">
+      <li><b>SPHEREx tek başına yavaş hareketi ayıramaz.</b> Pikseli 6,2″, verisi yaklaşık bir yıllık: ~2″/yıl'dan yavaşı ölçülemez. Eski fotoğraflarla birlikte süre 73 yıla çıkar.</li>
+      <li><b>Eski taramaların tarihi yaklaşık.</b> Plaklar ve yığınlar ±1–2 yıl belirsiz.</li>
+      <li><b>Bilinmeyen asteroit bulma iddiası yok.</b> Tek dönemde görünenler yalnız bilinen bir asteroitle eşleşirse gösterilir.</li>
+      <li><b>Parlak yıldızlar doyar.</b> K≲9 kadirden parlaklarda SPHEREx spektrumu alt sınırdır.</li>
+      <li><b>Arşiv geriden gelir.</b> IRSA yeni veriyi ~6 hafta gecikmeyle yayınlar ve ileriye dönük gözlem takvimi yayınlamaz.</li>
+      <li><b>Bulunan her şey adaydır.</b> Otomatik sonuçlar doğrulanmış keşif değildir.</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="ic">
+    <span>Görüntüler: NASA SPHEREx (NASA/JPL-Caltech/IPAC, IRSA), STScI DSS ve Pan-STARRS, legacysurvey.org, NASA SkyView, CADC · Kataloglar: Gaia DR3 (ESA), CatWISE2020, SIMBAD, IMCCE SkyBoT, HYG Database v4.2 (CC BY-SA 4.0), UltracoolSheet (CC BY 4.0).</span>
+    <span>ArpaSphere · NASA Space Apps Challenge 2026 projesi. NASA ile resmî bir bağlantısı yoktur.</span>
+  </div>
+</footer>
+
+<script>
+// Tema
+(()=>{ const b=document.getElementById("temaBtn"), r=document.documentElement;
+  const koyu=()=>r.dataset.tema? r.dataset.tema==="koyu" : matchMedia("(prefers-color-scheme: dark)").matches;
+  b.onclick=()=>{ r.dataset.tema=koyu()?"acik":"koyu"; try{ localStorage.setItem("tema",r.dataset.tema); }catch(e){} }; })();
+
+// Gerçek Barnard kareleri: göz kırp ya da kaydır
+(()=>{
+  const B={{BARNARD}}, K=B.kareler, plak=document.getElementById("plak"), ic=document.getElementById("plakIc"), svg=document.getElementById("katman"),
+    etiket=document.getElementById("etiket"), imgs=[...ic.querySelectorAll("img")], r=document.getElementById("kaydirR"), sessiz=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let mod="blink", i=0, zam=null, x=.5;
+  const ilk=K[0], son=K[K.length-1];
+  const yol=`<line x1="${ilk.xy[0]}" y1="${ilk.xy[1]}" x2="${son.xy[0]}" y2="${son.xy[1]}" stroke="#d4a64a" stroke-width="1.4" stroke-dasharray="5 5" opacity=".85"/>`+
+    `<line x1="${son.xy[0]}" y1="${son.xy[1]}" x2="${B.x2050[0]}" y2="${B.x2050[1]}" stroke="#f0b44c" stroke-width="1.2" stroke-dasharray="1 5"/>`+
+    `<text x="${son.xy[0]+12}" y="20" fill="#f0b44c" font-family="IBM Plex Mono, monospace" font-size="13" stroke="#000" stroke-width="3" paint-order="stroke">2050 ↑</text>`;
+  const halka=(k,kesik)=>`<circle cx="${k.xy[0]}" cy="${k.xy[1]}" r="15" fill="none" stroke="#ecc777" stroke-width="1.8"${kesik?' stroke-dasharray="4 4"':""}/>`+
+    `<text x="${k.xy[0]+20}" y="${k.xy[1]+5}" fill="#ecc777" font-family="IBM Plex Mono, monospace" font-size="13" stroke="#000" stroke-width="3" paint-order="stroke">${Math.floor(k.yil)}</text>`;
+  function ciz(){
+    imgs.forEach((im,k)=>{ im.classList.remove("on","sol"); });
+    if(mod==="blink"){ imgs[i].classList.add("on"); svg.innerHTML=yol+halka(K[i]);
+      etiket.innerHTML=`<b>${Math.floor(K[i].yil)}</b> ${K[i].ad}`; }
+    else { imgs[K.length-1].classList.add("on"); imgs[0].classList.add("sol"); ic.style.setProperty("--x",(x*100).toFixed(1)+"%");
+      const X=x*512; svg.innerHTML=yol+halka(ilk,true)+halka(son)+`<line x1="${X}" y1="0" x2="${X}" y2="512" stroke="#f1e6c8" stroke-width="1.6"/>`+
+        `<circle cx="${X}" cy="256" r="14" fill="rgba(6,9,14,.85)" stroke="#d4a64a" stroke-width="1.5"/><path d="M${X-4} 251l-5 5 5 5M${X+4} 251l5 5-5 5" fill="none" stroke="#f1e6c8" stroke-width="1.6"/>`;
+      etiket.innerHTML=`<b>1953</b> ◂ ▸ <b>2026</b> SPHEREx`; }
+  }
+  function oynat(){ clearInterval(zam); if(sessiz||mod!=="blink") return; zam=setInterval(()=>{ i=(i+1)%K.length; ciz(); },1000); }
+  document.querySelectorAll(".secim button").forEach(b=>b.onclick=()=>{ mod=b.dataset.m; plak.classList.toggle("kaydir",mod==="kaydir");
+    document.querySelectorAll(".secim button").forEach(o=>o.setAttribute("aria-pressed",String(o===b)));
+    document.getElementById("plakNot").textContent=mod==="blink"?"Barnard Yıldızı · yılda 10,4″ kuzeye":"Ayırıcıyı sürükle: 73 yılda ~12′ yol";
+    if(mod==="blink") oynat(); else clearInterval(zam); ciz(); });
+  r.oninput=()=>{ x=r.value/100; ciz(); };
+  let sur=false; const yer=e=>{ const q=ic.getBoundingClientRect(); x=Math.max(0,Math.min(1,(e.clientX-q.left)/q.width)); r.value=Math.round(x*100); ciz(); };
+  ic.addEventListener("pointerdown",e=>{ if(mod!=="kaydir") return; sur=true; try{ ic.setPointerCapture(e.pointerId); }catch(_){ } yer(e); });
+  ic.addEventListener("pointermove",e=>{ if(sur) yer(e); });
+  ["pointerup","pointercancel"].forEach(t=>ic.addEventListener(t,()=>sur=false));
+  if(sessiz) i=K.length-1;
+  ciz(); oynat();
+})();
+</script>
+</body>
+</html>
