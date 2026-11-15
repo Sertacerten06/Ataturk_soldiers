@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<script>try{var t=localStorage.getItem("arpasphere-tema");if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"koyu":"acik";document.documentElement.dataset.tema=t;}catch(e){}</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#112e51">
+<title>Bulgularımız · ArpaSphere</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2306090e'/%3E%3Cpath d='M4 16c3.5-5.5 7.5-8 12-8s8.5 2.5 12 8c-3.5 5.5-7.5 8-12 8s-8.5-2.5-12-8z' fill='none' stroke='%23d4a64a' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23d4a64a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Ana sitenin görünümü: tek koyu tema, pirinç aksan. Veriler bulgular.json'dan (araclar/bulgular_uret.py üretir). */
+:root{
+  --bg:#06090e; --panel:rgba(16,22,32,.78); --sunk:#070b11; --line:rgba(150,166,190,.13); --line2:rgba(150,166,190,.26);
+  --fg:#ece7dc; --muted:#8f99a9; --dim:#626c7b; --brass:#d4a64a; --brass-hi:#ecc777; --cyan:#5ec8f2; --ok:#5fd39a; --bad:#e86a5a;
+  --s1:#3987e5; --s2:#d95926;
+  --display:"Space Grotesk", "Segoe UI", system-ui, sans-serif; --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif; --mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:radial-gradient(900px 600px at 85% -10%,rgba(94,200,242,.07),transparent 70%),radial-gradient(800px 600px at -10% 110%,rgba(212,166,74,.06),transparent 70%),var(--bg);
+  color:var(--fg);font:15px/1.55 var(--body);min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:var(--brass)} a:hover{color:var(--brass-hi)}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:16px;height:60px;padding:0 max(20px,env(safe-area-inset-right,0px)) 0 max(20px,env(safe-area-inset-left,0px));
+  background:rgba(6,9,14,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top a.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;font:700 18px var(--display)}
+.top a.brand span{color:var(--brass)}
+.top .sp{flex:1}
+.wrap{max-width:1180px;margin:0 auto;padding:36px max(20px,env(safe-area-inset-right,0px)) 64px max(20px,env(safe-area-inset-left,0px));display:grid;gap:44px}
+@media (max-width:560px){.wrap{padding-inline:16px;gap:34px}}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin:0 0 12px}
+h1{font:700 clamp(30px,4.6vw,52px)/1.08 var(--display);margin:0;letter-spacing:-.02em;text-wrap:balance;max-width:22ch}
+h2{font:600 clamp(22px,2.6vw,30px)/1.15 var(--display);margin:0 0 8px;letter-spacing:-.01em}
+.lead{color:var(--muted);font-size:17px;max-width:64ch;margin:14px 0 0}
+p{margin:0}
+.muted{color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;display:grid;gap:6px}
+.tile b{font:700 clamp(30px,3.6vw,42px)/1 var(--display);color:var(--brass);font-variant-numeric:tabular-nums}
+.tile span{color:var(--muted);font-size:14px;line-height:1.4}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:8px;align-content:start}
+.card h3{font:600 17px/1.3 var(--display);margin:0}
+.card .num{font:600 15px var(--mono);color:var(--ok)}
+.card p{color:var(--muted);font-size:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:14px;min-width:0}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;font:12px var(--mono)}
+.chart .ax text{fill:var(--muted)} .chart .ax line{stroke:var(--line2)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font:13px var(--mono);color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:0}
+.tip{position:fixed;z-index:20;pointer-events:none;background:rgba(10,15,23,.96);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font:12px/1.45 var(--mono);max-width:280px;box-shadow:0 12px 30px -10px rgba(0,0,0,.8)}
+.tablebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tablebar input,.tablebar select{background:var(--sunk);color:var(--fg);border:1px solid var(--line2);border-radius:6px;padding:8px 10px;font:13px var(--body);min-width:0}
+.tablebar input{flex:1 1 220px}
+.tablebar input:focus,.tablebar select:focus{outline:none;border-color:var(--brass)}
+.tw{overflow:auto;max-height:620px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:760px;font:13px/1.4 var(--body)}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:#0d131c;color:var(--muted);font-weight:500;font-size:12px;cursor:pointer;user-select:none}
+th[aria-sort]::after{content:" ↕";color:var(--dim)} th[aria-sort=ascending]::after{content:" ↑";color:var(--brass)} th[aria-sort=descending]::after{content:" ↓";color:var(--brass)}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right} th.n{text-align:right}
+tr:hover td{background:rgba(255,255,255,.025)}
+.tag{display:inline-block;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:99px;border:1px solid var(--line2);color:var(--muted)}
+.tag.ok{color:var(--ok);border-color:rgba(95,211,154,.4)} .tag.mid{color:var(--brass-hi);border-color:rgba(212,166,74,.45)} .tag.hale{color:#ff9a6a;border-color:rgba(217,89,38,.5)}
+.note{border-left:3px solid var(--brass);padding:4px 0 4px 14px;color:var(--muted);font-size:14px}
+footer{color:var(--dim);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+
+/* Klasik / kurumsal tema (ana siteyle aynı): açık zemin, lacivert, tırnaklı başlıklar */
+:root{--bg:#f5f4ef; --panel:#ffffff; --sunk:#f6f7f8; --line:#dcdee0; --line2:#bfc4ca; --fg:#1b1b1b; --muted:#4a5059; --dim:#6b7078;
+  --brass:#1a4480; --brass-hi:#112e51; --cyan:#0b6e8f; --ok:#00703c; --bad:#b50909; --s1:#1a4480; --s2:#c05a1e; --vurgu:#9b1c2c; --altin:#c9a227;
+  --display:"Source Serif 4", Georgia, serif; --body:"Public Sans", "Helvetica Neue", Arial, sans-serif; color-scheme:light}
+body{background:var(--bg)}
+.top{background:#112e51;border-bottom:3px solid var(--altin);color:#fff;backdrop-filter:none}
+.top a.brand{color:#fff;font:600 20px var(--display)} .top a.brand span{color:#f1e6c8} .top a{color:#fff}
+.eyebrow{color:var(--vurgu);font-family:var(--body);font-weight:700}
+h1,h2{color:#112e51} h1{font-weight:600}
+.tile,.card,.panel{background:#fff;border-radius:4px;box-shadow:0 1px 2px rgba(17,46,81,.05)}
+.tile{border-top:3px solid #112e51} .tile b{color:#112e51;font-family:var(--display)}
+.card h3{font-family:var(--display);color:#112e51}
+.chart .ax text{fill:#4a5059}
+.tip{background:#fff;color:var(--fg);box-shadow:0 8px 24px -10px rgba(17,46,81,.35)}
+th{background:#f1f3f5;color:var(--muted)}
+tr:hover td{background:#f3f6fb}
+.tablebar input,.tablebar select{background:#fff;border-color:#8a9099;color:var(--fg)}
+.tag.mid{color:#7a5d00;border-color:#c9a227} .tag.hale{color:#a1420f;border-color:#c05a1e}
+.note{border-left-color:#112e51}
+footer{border-top:3px solid #112e51}
+
+/* Sade katman (ana siteyle aynı): sistem fontu, Merriweather başlık, süssüz etiketler */
+:root{--display:Merriweather, Georgia, serif; --body:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace}
+.top{border-bottom:0} .top a.brand{font:700 19px var(--display)}
+.eyebrow{text-transform:none;letter-spacing:0;font:600 14px var(--body);color:#9b1c2c}
+h1{font:700 clamp(28px,4vw,44px)/1.2 var(--display);color:#1b1b1b} h2{font:700 clamp(20px,2.2vw,26px)/1.25 var(--display);color:#1b1b1b}
+.tile{border-top:1px solid var(--line)} .tile b{font:700 clamp(28px,3.2vw,38px)/1 var(--display);color:#112e51}
+.card h3{font:700 16px var(--display);color:#1b1b1b} .card .num{font:600 14px var(--body);color:#00703c}
+.tag{text-transform:none;font:600 11.5px/1 var(--body);border-radius:3px}
+footer{border-top:1px solid var(--line)}
+
+/* Koyu tema (lacivert), ana siteyle aynı seçim (localStorage arpasphere-tema) */
+html[data-tema=koyu]{--bg:#0a1424; --panel:#111f36; --sunk:#0c182c; --line:#22385a; --line2:#34507a; --fg:#e7edf6; --muted:#a9b8cd; --dim:#7d8ea8;
+  --brass:#7fb0f0; --brass-hi:#a8c9f7; --s1:#6fa6ef; --s2:#f0995f; --vurgu:#f08b96; color-scheme:dark}
+html[data-tema=koyu] body{background:var(--bg);color:var(--fg)}
+html[data-tema=koyu] .top{background:#081325;border-bottom:1px solid #1c3150}
+html[data-tema=koyu] h1,html[data-tema=koyu] h2,html[data-tema=koyu] .card h3{color:#eef3fa}
+html[data-tema=koyu] .tile,html[data-tema=koyu] .card,html[data-tema=koyu] .panel{background:var(--panel);border-color:var(--line);box-shadow:none}
+html[data-tema=koyu] .tile b{color:#a8c9f7} html[data-tema=koyu] .card .num{color:#5fd39a}
+html[data-tema=koyu] th{background:#0f1d33;color:var(--muted)} html[data-tema=koyu] tr:hover td{background:#16294a}
+html[data-tema=koyu] .tablebar input,html[data-tema=koyu] .tablebar select{background:#0c182c;color:var(--fg);border-color:#3f5b85}
+html[data-tema=koyu] .tip{background:#0f1d33;color:var(--fg);border-color:var(--line2)}
+html[data-tema=koyu] .chart .ax text{fill:#a9b8cd} html[data-tema=koyu] .chart svg [stroke="#ffffff"]{stroke:#111f36}
+html[data-tema=koyu] .note{border-left-color:#4f86d6}
+html[data-tema=koyu] .tag.mid{color:#e3c46a} html[data-tema=koyu] .tag.hale{color:#f0995f}
+html[data-tema=koyu] footer{border-top-color:var(--line)}
+
+/* Alet katmanı: ana araçla aynı sade görünüm (IBM Plex, 4 px köşe, gölgesiz, tek vurgu). */
+:root{--display:"IBM Plex Sans",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+html:not([data-tema=koyu]){--bg:#f7f7f5;--line:#dcdfe3;--line2:#b9bfc7;--fg:#15181d;--muted:#4f5762;--brass:#1a4480;--brass-hi:#112e51}
+html body{font-family:var(--body)}
+.top{border-bottom:1px solid rgba(255,255,255,.08)!important}
+.top a.brand{font:600 18px var(--display)!important}
+#temaBtn{border-color:transparent!important;border-radius:3px!important}
+#temaBtn:hover{background:rgba(255,255,255,.1)!important}
+.eyebrow{font:500 12.5px var(--mono)!important;color:var(--muted)!important;letter-spacing:0;text-transform:none}
+h1{font:600 clamp(28px,3.4vw,40px)/1.15 var(--display)!important;letter-spacing:-.015em;color:var(--fg)!important}
+h2{font:600 clamp(20px,2vw,24px)/1.25 var(--display)!important;color:var(--fg)!important}
+.lead{font-size:16px}
+.tile,.card,.panel,.tw,.tip{border-radius:4px!important;box-shadow:none!important}
+.tile{border-top:1px solid var(--line)!important}
+.tile b{font:600 clamp(22px,2.4vw,28px)/1.1 var(--mono)!important;color:var(--fg)!important}
+.card h3{font:600 15.5px/1.3 var(--display)!important;color:var(--fg)!important}
+.card .num{font:500 14px var(--mono)!important}
+.tag{border-radius:3px!important;font:500 11.5px/1 var(--mono)!important}
+.legend{font:12.5px var(--mono)}
+.tablebar input,.tablebar select{border-radius:3px}
+html[data-tema=koyu]{--bg:#0b111c;--panel:#111a28;--sunk:#0d1522;--line:#1f2a3b;--line2:#33435a;--fg:#eef1f5;--muted:#a3aebd;--brass:#8db7f0;--brass-hi:#b5d0f6}
+html[data-tema=koyu] .tile b,html[data-tema=koyu] h1,html[data-tema=koyu] h2,html[data-tema=koyu] .card h3{color:var(--fg)!important}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="./">ArpaSphere</a>
+  <div class="sp"></div>
+  <button id="temaBtn" type="button" style="font:600 13px var(--body);background:transparent;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:3px;padding:6px 10px;cursor:pointer">Koyu</button>
+  <a href="./">Siteye dön →</a>
+</header>
+<main class="wrap">
+  <section>
+        <h1>Bulgular ve doğrulama</h1>
+    <p class="lead" id="lead">Yükleniyor…</p>
+  </section>
+
+  <section class="tiles" id="tiles" aria-label="Özet sayılar"></section>
+
+  <section>
+    <h2>Önce yöntemi doğruladık</h2>
+    <p class="muted" style="margin-bottom:14px">Her ölçümü sonucu bilinen bir cisimle karşılaştırdık.</p>
+    <div class="cards" id="dogrulama"></div>
+  </section>
+
+  <section class="panel" id="karne" hidden>
+    <div>
+      <p class="eyebrow">Doğruluk karnesi</p>
+      <h2 id="karneBas">Hız ölçümünü hızı bilinen yıldızlarda sınadık</h2>
+      <p class="muted" id="karneNot"></p>
+    </div>
+    <div class="tiles" id="karneTiles"></div>
+    <div class="legend" id="karneLegend"></div>
+    <div class="chart" id="karneChart"></div>
+    <p class="note" id="karneAlt"></p>
+    <details><summary style="cursor:pointer;color:var(--brass)">Bütün ölçümler (tablo)</summary>
+      <div class="tw" style="margin-top:10px"><table id="karneTablo"><thead><tr>
+        <th>Yıldız</th><th class="n">Katalog (″/yıl)</th><th class="n">SPHEREx (″/yıl)</th><th class="n">Fark</th><th class="n">Yön farkı</th><th class="n">Kare</th><th>Sonuç</th>
+      </tr></thead><tbody></tbody></table></div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <div>
+      <h2>Türü bilinmeyen yıldızlara ilk tür tahmini</h2>
+      <p class="muted" id="grafikNot"></p>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="chart" id="chart"></div>
+    <p class="note" id="grafikAlt"></p>
+  </section>
+
+  <section class="panel" id="metanBolum" hidden>
+    <div>
+      <h2>Kahverengi cücelerde metan: SPHEREx sıralaması</h2>
+      <p class="muted" id="metanNot"></p>
+    </div>
+    <div class="tw" style="max-height:none"><table id="metanTablo"><thead><tr>
+      <th>Sıra</th><th>Cisim</th><th>Katalog türü</th><th>SPHEREx türü</th><th class="n">Metan 3,3 µm</th><th class="n">Su 1,4 µm</th><th class="n">Uzaklık (pc)</th><th class="n">W2</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="legend" id="metanLegend"></div>
+    <div class="chart" id="metanChart"></div>
+    <p class="note" id="metanAlt"></p>
+  </section>
+
+  <section class="panel">
+    <div>
+      <h2>Bütün yıldızlar</h2>
+      <p class="muted">Satıra tıkla: yıldız sitede açılır. Başlığa tıkla: sırala.</p>
+    </div>
+    <div class="tablebar">
+      <input id="ara" type="search" placeholder="Yıldız ara (ör. LP, G 42)" aria-label="Yıldız ara">
+      <select id="filtre" aria-label="Süzgeç"><option value="">Hepsi</option><option value="hale">Yalnız hale adayları</option><option value="uyum">SPHEREx ile Gaia ±1 içinde</option><option value="fark">SPHEREx ile Gaia ayrışıyor</option></select>
+    </div>
+    <div class="tw"><table id="tablo"><thead><tr>
+      <th data-k="ad" aria-sort="none">Yıldız</th><th data-k="sx_tip" class="n" aria-sort="none">SPHEREx türü</th><th data-k="gaia_tip" class="n" aria-sort="none">Gaia renginden</th>
+      <th data-k="dist" class="n" aria-sort="none">Uzaklık (pc)</th><th data-k="vtan" class="n" aria-sort="none">Hız (km/s)</th><th data-k="w2" class="n" aria-sort="none">W2</th><th>Not</th>
+    </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section>
+    <h2>Dürüst sınırlar</h2>
+    <div class="cards" id="sinirlar"></div>
+  </section>
+
+  <footer id="foot">Veri: NASA SPHEREx ve Gaia DR3, CatWISE2020 (IRSA) · SIMBAD (CDS, Harvard aynası) · The UltracoolSheet (Best, Dupuy, Liu ve ark., CC BY 4.0). Bağımsız bir öğrenci takımının NASA Space Apps projesidir; NASA ile resmî bağlantısı yoktur.</footer>
+</main>
+<div class="tip" id="tip" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const temaYaz=()=>{ $("temaBtn").textContent=document.documentElement.dataset.tema==="koyu"?"Açık":"Koyu"; };
+$("temaBtn").onclick=()=>{ const r=document.documentElement; r.dataset.tema=r.dataset.tema==="koyu"?"acik":"koyu"; try{ localStorage.setItem("arpasphere-tema",r.dataset.tema); }catch(e){} temaYaz(); };
+temaYaz();
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tipAd=t=>t==null?"—":t<=0.25?"≤K0V":(t<8?`K${+(Math.round(t*2)/2).toFixed(1)}`:`M${+(Math.round((t-8)*2)/2).toFixed(1)}`)+"V";
+const fmt=n=>n==null?"—":Number(n).toLocaleString("tr-TR");
+const link=s=>`./?name=${encodeURIComponent(s.ad)}&ra=${s.ra2000.toFixed(4)}&dec=${s.dec2000.toFixed(4)}&pm=${Math.round(s.pm)}&pa=${Math.round(s.pa)}&fov=5`;
+
+fetch("bulgular.json?v="+Date.now()).then(r=>r.json()).then(D=>{
+  const O=D.ozet;
+  $("lead").textContent=`${O.bolge} rastgele gökyüzü bölgesinde ${fmt(O.kaynak)} hızlı kaynağı Gaia ve SIMBAD ile karşılaştırdık; sahte olanları eledik, hareketi bilinen ama türü hiç belirlenmemiş ${O.tur_n} yıldızın SPHEREx spektrumundan türünü tahmin ettik.`;
+  $("tiles").innerHTML=[
+    [fmt(O.kaynak),"hızlı CatWISE kaynağı tarandı ("+O.bolge+" bölge)"],
+    [fmt(O.sahte),"sahte hareket elendi (galaksi, artefakt, hareketsiz Gaia yıldızı)"],
+    [O.tur_n,"yıldıza ilk SPHEREx tür tahmini"],
+    [O.uyum_yuzde+"%","Gaia rengiyle ±1 alt tür içinde uyuşuyor ("+O.uyum_n+" yıldız)"],
+    [O.hale_n,"hale yıldızı adayı (hız > 200 km/s)"],
+    [O.sefeid_p+" g","Sefeid periyodu SPHEREx'ten bulundu (bilinen "+O.sefeid_bilinen+" g)"],
+  ].map(([b,s])=>`<div class="tile"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
+  $("dogrulama").innerHTML=D.dogrulama.map(d=>`<div class="card"><h3>${esc(d.ne)}</h3><span class="num">${esc(d.sonuc)}</span><p>${esc(d.aciklama)}</p></div>`).join("");
+  $("sinirlar").innerHTML=D.sinirlar.map(d=>`<div class="card"><h3>${esc(d.ne)}</h3><p>${esc(d.aciklama)}</p></div>`).join("");
+  $("foot").textContent+=` · Üretim: ${D.uretim}`;
+  grafik(D); tablo(D);
+}).catch(e=>{ $("lead").textContent="Bulgular yüklenemedi: "+e; });
+
+// SPHEREx türü (dikey) – Gaia renginden tür (yatay); köşegen = tam uyum, bant = ±1 alt tür
+function grafik(D){
+  const S=D.yildizlar.filter(s=>s.sx_tip!=null&&s.gaia_tip!=null&&!s.uc), box=$("chart");
+  const lo=Math.min(...S.flatMap(s=>[s.sx_tip,s.gaia_tip]))-0.5, hi=Math.max(...S.flatMap(s=>[s.sx_tip,s.gaia_tip]))+0.5;
+  const W=Math.max(320,Math.min(1100,box.clientWidth||900)), H=Math.round(Math.min(560,Math.max(320,W*0.55))), ml=60, mr=16, mt=16, mb=46, pw=W-ml-mr, ph=H-mt-mb;
+  const X=v=>ml+pw*(v-lo)/(hi-lo), Y=v=>mt+ph*(1-(v-lo)/(hi-lo));
+  const ticks=[]; for(let t=Math.ceil(lo); t<=hi; t++) if(t%2===0) ticks.push(t);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="SPHEREx türü ile Gaia renginden çıkan türün karşılaştırması, ${S.length} yıldız"><g class="ax">`;
+  for(const t of ticks){ s+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(t)}" y2="${Y(t)}" opacity=".5"/><text x="${ml-8}" y="${Y(t)+4}" text-anchor="end">${tipAd(t)}</text>`;
+    s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${mt+ph}" y2="${mt+ph+5}"/><text x="${X(t)}" y="${mt+ph+18}" text-anchor="middle">${tipAd(t)}</text>`; }
+  s+=`</g><polygon points="${X(lo)},${Y(lo+1)} ${X(hi-1)},${Y(hi)} ${X(hi)},${Y(hi)} ${X(hi)},${Y(hi-1)} ${X(lo+1)},${Y(lo)} ${X(lo)},${Y(lo)}" fill="rgba(26,68,128,.07)"/>`;
+  s+=`<line x1="${X(lo)}" y1="${Y(lo)}" x2="${X(hi)}" y2="${Y(hi)}" stroke="#112e51" stroke-width="1.5" stroke-dasharray="5 5" opacity=".8"/>`;
+  s+=`<text x="${ml+pw/2}" y="${H-6}" text-anchor="middle" fill="var(--muted)">Gaia renginden (BP−RP) çıkan tür</text>`;
+  s+=`<text transform="translate(16 ${mt+ph/2}) rotate(-90)" text-anchor="middle" fill="var(--muted)">SPHEREx spektrumundan tür</text>`;
+  S.forEach((o,i)=>{ const x=X(o.gaia_tip), y=Y(o.sx_tip);
+    s+= o.hale ? `<path d="M${x} ${y-6}L${x+6} ${y}L${x} ${y+6}L${x-6} ${y}Z" fill="var(--s2)" stroke="#ffffff" stroke-width="2"/>`
+               : `<circle cx="${x}" cy="${y}" r="4.5" fill="var(--s1)" stroke="#ffffff" stroke-width="2"/>`;
+    s+=`<circle cx="${x}" cy="${y}" r="11" fill="transparent" data-i="${i}" style="cursor:pointer"/>`; });
+  s+=`</svg>`; box.innerHTML=s;
+  $("legend").innerHTML=`<span><i style="background:var(--s1);border-radius:50%"></i>yıldız (${S.filter(o=>!o.hale).length})</span><span><i style="background:var(--s2);transform:rotate(45deg)"></i>hale adayı (${S.filter(o=>o.hale).length})</span><span><i style="background:rgba(26,68,128,.18)"></i>±1 alt tür bandı</span>`;
+  const n1=S.filter(o=>Math.abs(o.sx_tip-o.gaia_tip)<=1).length;
+  $("grafikNot").textContent=`${S.length} yıldız. Noktalar kesikli köşegene ne kadar yakınsa, iki bağımsız yöntem o kadar aynı sonucu veriyor.`;
+  $("grafikAlt").textContent=`${n1} / ${S.length} yıldız (%${Math.round(100*n1/S.length)}) ±1 alt tür içinde. Şablon aralığının alt ucunda (K0) iki yöntemin de takıldığı ${D.ozet.uc_n} yıldız (büyük olasılıkla daha sıcak, G tipi) grafiğe ve orana katılmadı. Yöntem: türü bilinen ${D.ozet.ref_n} yıldızdan kurulan SPHEREx şablonları; birini-dışarıda-bırak doğrulamasında hata payı ±${D.ozet.ref_rms} alt tür. Hale adaylarında (metalce fakir, yaşlı yıldızlar) şablonlar normal cücelere göre kurulduğu için tahmin yaklaşıktır.`;
+  const tip=$("tip");
+  box.querySelectorAll("circle[data-i]").forEach(c=>{
+    const show=()=>{ const o=S[+c.dataset.i]; tip.innerHTML=`<b>${esc(o.ad)}</b><br>SPHEREx ${tipAd(o.sx_tip)} · Gaia ${tipAd(o.gaia_tip)}<br>${o.dist?o.dist+" pc":""}${o.vtan?" · "+o.vtan+" km/s":""}<br><span style="color:var(--muted)">tıkla: sitede aç</span>`;
+      tip.hidden=false; const r=c.getBoundingClientRect(); tip.style.left=Math.min(innerWidth-290,r.right+8)+"px"; tip.style.top=(r.top-10)+"px"; };
+    c.addEventListener("mouseenter",show); c.addEventListener("mouseleave",()=>tip.hidden=true);
+    c.addEventListener("click",()=>location.href=link(S[+c.dataset.i]));
+  });
+}
+// Doğruluk karnesi: araclar/hiz_karne_uret.py → hiz_karne.json. Katalog hızı (yatay) – yalnız SPHEREx karelerinden ölçülen hız (dikey), log eksen, 1σ hata çubuklu
+fetch("hiz_karne.json?v="+Date.now()).then(r=>r.ok?r.json():null).then(K=>{ if(K&&K.yildizlar) karneGoster(K); }).catch(()=>{});
+function karneGoster(K){
+  const O=K.ozet, S=K.yildizlar.filter(e=>e.durum!=="belirsiz"), box=$("karneChart"), v1=x=>tv(Number(x).toFixed(1)), v2=x=>tv(Number(x).toFixed(2));
+  $("karne").hidden=false;
+  $("karneBas").textContent=`Hız ölçümünü hızı bilinen ${O.sinanan} yıldızda sınadık`;
+  $("karneNot").textContent=`Her yıldızı canlı sitede açtık ve hızını yalnız SPHEREx karelerinden (${v1(O.yil[0])}–${v1(O.yil[1])}) kendi yıldız izleyicimizle ölçtük; katalog değerini ölçüme hiç vermedik. Sonra Gaia/Hipparcos hızıyla karşılaştırdık.`;
+  $("karneTiles").innerHTML=[
+    [`%${tv(O.medyan_fark)}`,"ortanca hız farkı (katalogla)"],
+    [`${O.uyumlu}/${O.olculen}`,"yıldız 2σ hata payı içinde uyumlu"],
+    [`${tv(O.medyan_dpa)}°`,"ortanca yön farkı"],
+  ].map(([b,t])=>`<div class="tile"><b>${esc(b)}</b><span>${esc(t)}</span></div>`).join("");
+  const lo=1, hi=Math.max(12,Math.ceil(Math.max(...S.map(e=>Math.max(e.kat,e.pm+e.hata)))));
+  const W=Math.max(320,Math.min(1100,box.clientWidth||900)), H=Math.round(Math.min(560,Math.max(340,W*0.55))), ml=56, mr=16, mt=16, mb=46, pw=W-ml-mr, ph=H-mt-mb;
+  const L=v=>Math.log(Math.max(lo,Math.min(hi,v))), X=v=>ml+pw*(L(v)-L(lo))/(L(hi)-L(lo)), Y=v=>mt+ph*(1-(L(v)-L(lo))/(L(hi)-L(lo)));
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Katalog hızı ile SPHEREx'ten ölçülen hızın karşılaştırması, ${S.length} yıldız"><g class="ax">`;
+  for(const t of [1,1.5,2,3,5,7,10,15].filter(t=>t<=hi)){ s+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(t)}" y2="${Y(t)}" opacity=".5"/><text x="${ml-8}" y="${Y(t)+4}" text-anchor="end">${tv(t)}</text>`;
+    s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${mt+ph}" y2="${mt+ph+5}"/><text x="${X(t)}" y="${mt+ph+18}" text-anchor="middle">${tv(t)}</text>`; }
+  s+=`</g><polygon points="${X(lo)},${Y(lo*1.2)} ${X(hi/1.2)},${Y(hi)} ${X(hi)},${Y(hi)} ${X(hi)},${Y(hi/1.2)} ${X(lo*1.2)},${Y(lo)} ${X(lo)},${Y(lo)}" fill="rgba(26,68,128,.07)"/>`;
+  s+=`<line x1="${X(lo)}" y1="${Y(lo)}" x2="${X(hi)}" y2="${Y(hi)}" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 5" opacity=".6" style="color:var(--fg)"/>`;
+  s+=`<text x="${ml+pw/2}" y="${H-6}" text-anchor="middle" fill="var(--muted)">Katalog hızı, Gaia/Hipparcos (″/yıl)</text>`;
+  s+=`<text transform="translate(16 ${mt+ph/2}) rotate(-90)" text-anchor="middle" fill="var(--muted)">Yalnız SPHEREx'ten ölçülen (″/yıl)</text>`;
+  S.forEach((e,i)=>{ const x=X(e.kat), y=Y(e.pm), ya=Y(e.pm+e.hata), yb=Y(Math.max(lo,e.pm-e.hata)), ok=e.durum==="uyumlu";
+    s+=`<line x1="${x}" x2="${x}" y1="${ya}" y2="${yb}" stroke="${ok?"var(--s1)":"var(--s2)"}" stroke-width="1.5" opacity=".55"/>`;
+    s+= ok ? `<circle cx="${x}" cy="${y}" r="4.5" fill="var(--s1)" stroke="#ffffff" stroke-width="2"/>`
+           : `<path d="M${x} ${y-6}L${x+6} ${y}L${x} ${y+6}L${x-6} ${y}Z" fill="var(--s2)" stroke="#ffffff" stroke-width="2"/>`;
+    s+=`<circle cx="${x}" cy="${y}" r="11" fill="transparent" data-i="${i}" style="cursor:pointer"/>`; });
+  s+=`</svg>`; box.innerHTML=s;
+  const nS=S.filter(e=>e.durum!=="uyumlu").length;
+  $("karneLegend").innerHTML=`<span><i style="background:var(--s1);border-radius:50%"></i>2σ içinde uyumlu (${S.length-nS})</span><span><i style="background:var(--s2);transform:rotate(45deg)"></i>2σ'dan fazla sapıyor (${nS})</span><span><i style="background:none;border-top:2px dashed var(--fg);height:0;width:16px;opacity:.6"></i>tam uyum (ölçülen = katalog)</span><span><i style="background:rgba(26,68,128,.14)"></i>±%20 bandı</span>`;
+  $("karneAlt").textContent=`${S.length} yıldızda ölçüm güvenilir çıktı (hata hızın yarısından küçük). Ortanca ölçülen/katalog oranı ${v2(O.medyan_oran)}, korelasyon r = ${v2(O.r)}, ortanca ölçüm hatası ±${v2(O.medyan_hata)}″/yıl. `
+    +`${O.belirsiz} yıldızda hata payı hızın yarısını aştı (yavaş ya da sönük)${O.olcum_yok?`, ${O.olcum_yok} yıldız karelerin çoğunda izlenemedi (komşusuyla karışık ya da çok sönük)`:""}; bunlar da tabloda. `
+    +`Listedeki ${O.denenen} hızlı yıldızdan ${O.veri_az} tanesinin bölgesinde SPHEREx'in henüz 3 dönemlik karesi yok; arşiv doldukça onlar da ölçülebilecek.`;
+  const tip=$("tip"), kl=e=>`./?name=${encodeURIComponent(e.ad)}`;
+  box.querySelectorAll("circle[data-i]").forEach(c=>{
+    const show=()=>{ const e=S[+c.dataset.i]; tip.innerHTML=`<b>${esc(e.ad)}</b><br>katalog ${v2(e.kat)}″/yıl · SPHEREx ${v2(e.pm)} ± ${v2(e.hata)}<br>yön farkı ${tv(e.dpa)}° · ${e.n} kare<br><span style="color:var(--muted)">tıkla: sitede aç</span>`;
+      tip.hidden=false; const r=c.getBoundingClientRect(); tip.style.left=Math.min(innerWidth-290,r.right+8)+"px"; tip.style.top=(r.top-10)+"px"; };
+    c.addEventListener("mouseenter",show); c.addEventListener("mouseleave",()=>tip.hidden=true);
+    c.addEventListener("click",()=>location.href=kl(S[+c.dataset.i]));
+  });
+  const etk={uyumlu:'<span class="tag ok">uyumlu</span>',sapiyor:'<span class="tag mid">sapıyor</span>',belirsiz:'<span class="tag">ölçülemedi</span>'};
+  document.querySelector("#karneTablo tbody").innerHTML=K.yildizlar.map(e=>`<tr><td><a href="${esc(kl(e))}">${esc(e.ad)}</a></td><td class="n">${v2(e.kat)}</td><td class="n">${v2(e.pm)} <span style="color:var(--dim)">±${v2(e.hata)}</span></td>`
+    +`<td class="n">%${Math.round(Math.abs(e.pm-e.kat)/e.kat*100)}</td><td class="n">${Math.round(e.dpa)}°</td><td class="n">${e.n}</td><td>${etk[e.durum]}</td></tr>`).join("")
+    +(K.olcum_yok||[]).map(a=>`<tr><td><a href="${esc(kl({ad:a}))}">${esc(a)}</a></td><td class="n" colspan="5" style="text-align:left;color:var(--dim)">SPHEREx karelerinin çoğunda izlenemedi</td><td><span class="tag">izlenemedi</span></td></tr>`).join("");
+}
+// Metan: araclar/metan_analiz.py → metan.json. Tablo ilk 10; grafik metan derinliği – katalogdaki T/Y alt türü (hata çubuklu)
+fetch("metan.json?v="+Date.now()).then(r=>r.ok?r.json():null).then(M=>{ if(M&&M.sirali) metanGoster(M); }).catch(()=>{});
+const tv=x=>x==null?"—":String(x).replace(".",","); // Türkçe ondalık virgül
+const katAd=n=>n==null?"—":n<10?`T${+n.toFixed(1)}`:`Y${+(n-10).toFixed(1)}`;
+const mlink=c=>`./?name=${encodeURIComponent(c.ad)}&ra=${c.ra2000.toFixed(4)}&dec=${c.dec2000.toFixed(4)}&pm=${c.pm}&pa=${c.pa}&fov=5`;
+function metanGoster(M){
+  $("metanBolum").hidden=false;
+  const top=M.cisimler.filter(c=>c.sira).slice(0,10);
+  $("metanNot").textContent=`UltracoolSheet'teki parlak (W2 ≤ 13,5) ${M.olculen} T ve Y tipi kahverengi cücenin SPHEREx spektrumunu ölçtük; metan bandı güvenilir ölçülen ${M.guvenilir} cisimden metanı en güçlü 10 tanesi:`;
+  document.querySelector("#metanTablo tbody").innerHTML=top.map(c=>`<tr data-href="${esc(mlink(c))}" style="cursor:pointer"><td class="n">${c.sira}</td><td><a href="${esc(mlink(c))}">${esc(c.ad)}</a></td>`
+    +`<td>${esc(c.sp)}</td><td>${esc(c.sx_ad||"—")}</td><td class="n"><b style="color:var(--vurgu)">%${tv(c.ch4)}</b> <span style="color:var(--dim)">±${tv(c.ch4_e)}</span></td>`
+    +`<td class="n">${c.h2o!=null?"%"+tv(c.h2o):"—"}</td><td class="n">${tv(c.dist)}</td><td class="n">${tv(c.w2)}</td></tr>`).join("");
+  document.querySelectorAll("#metanTablo tbody tr").forEach(tr=>tr.onclick=e=>{ if(e.target.tagName!=="A") location.href=tr.dataset.href; });
+  // grafik
+  const S=M.cisimler.filter(c=>c.ch4!=null&&c.ch4_e!=null&&c.ch4_e<=10&&c.kat_no!=null), box=$("metanChart");
+  const W=Math.max(320,Math.min(1100,box.clientWidth||900)), H=Math.round(Math.min(480,Math.max(300,W*0.45))), ml=56, mr=16, mt=16, mb=46, pw=W-ml-mr, ph=H-mt-mb;
+  const x0=-0.7, x1=Math.max(9.7,...S.map(c=>c.kat_no+0.7)), y0=Math.min(0,...S.map(c=>c.ch4-c.ch4_e))-3, y1=Math.max(...S.map(c=>c.ch4+c.ch4_e))+5;
+  const X=v=>ml+pw*(v-x0)/(x1-x0), Y=v=>mt+ph*(1-(v-y0)/(y1-y0));
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Metan bant derinliği ile katalogdaki T/Y alt türü, ${S.length} kahverengi cüce"><g class="ax">`;
+  for(let v=Math.ceil(y0/20)*20; v<=y1; v+=20){ s+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}" opacity=".5"/><text x="${ml-8}" y="${Y(v)+4}" text-anchor="end">%${v}</text>`; }
+  for(let t=0; t<=x1; t+=1){ if(t%2&&W<600) continue; s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${mt+ph}" y2="${mt+ph+5}"/><text x="${X(t)}" y="${mt+ph+18}" text-anchor="middle">${katAd(t)}</text>`; }
+  s+=`</g><text x="${ml+pw/2}" y="${H-6}" text-anchor="middle" fill="var(--muted)">Katalogdaki tür (UltracoolSheet; sağa doğru daha soğuk)</text>`;
+  s+=`<text transform="translate(14 ${mt+ph/2}) rotate(-90)" text-anchor="middle" fill="var(--muted)">SPHEREx metan derinliği (3,3 µm)</text>`;
+  const topSet=new Set(top.map(c=>c.ad));
+  S.forEach(c=>{ const x=X(c.kat_no), a=Y(c.ch4-c.ch4_e), b=Y(c.ch4+c.ch4_e); s+=`<line x1="${x}" x2="${x}" y1="${a}" y2="${b}" stroke="var(--muted)" opacity=".6"/>`; });
+  S.forEach((c,i)=>{ const x=X(c.kat_no), y=Y(c.ch4), t=topSet.has(c.ad);
+    s+=`<circle cx="${x}" cy="${y}" r="${t?6:4.5}" fill="${t?"var(--vurgu)":"var(--s1)"}" stroke="#ffffff" stroke-width="2"/><circle cx="${x}" cy="${y}" r="11" fill="transparent" data-i="${i}" style="cursor:pointer"/>`; });
+  s+=`</svg>`; box.innerHTML=s;
+  $("metanLegend").innerHTML=`<span><i style="background:var(--vurgu);border-radius:50%"></i>metanı en güçlü 10</span><span><i style="background:var(--s1);border-radius:50%"></i>diğerleri (${S.length-top.filter(c=>S.includes(c)).length})</span>`;
+  const tip=$("tip");
+  box.querySelectorAll("circle[data-i]").forEach(el=>{
+    const show=()=>{ const c=S[+el.dataset.i]; tip.innerHTML=`<b>${esc(c.ad)}</b><br>Katalog ${esc(c.sp)} · SPHEREx ${esc(c.sx_ad||"—")}<br>Metan %${tv(c.ch4)} ±${tv(c.ch4_e)} · su ${c.h2o!=null?"%"+tv(c.h2o):"—"}<br><span style="color:var(--muted)">tıkla: sitede aç</span>`;
+      tip.hidden=false; const r=el.getBoundingClientRect(); tip.style.left=Math.min(innerWidth-290,r.right+8)+"px"; tip.style.top=(r.top-10)+"px"; };
+    el.addEventListener("mouseenter",show); el.addEventListener("mouseleave",()=>tip.hidden=true); el.addEventListener("click",()=>location.href=mlink(S[+el.dataset.i]));
+  });
+  $("metanAlt").textContent=`Katalogdaki türle metan derinliği arasında sıra korelasyonu ρ = ${tv(M.spearman)} (${M.kor_n} cisim): tür soğudukça SPHEREx'in ölçtüğü metan artıyor`
+    +(M.erken_med!=null&&M.gec_med!=null?` (erken T0–T3 medyanı %${tv(M.erken_med)}, ${M.erken_n} cisim; geç T6–T9 medyanı %${tv(M.gec_med)}, ${M.gec_n} cisim)`:"")
+    +`. Bu, ölçümün fiziği doğru yakaladığını bağımsız olarak doğruluyor. Derinlik, bandın komşu sürekliliğe göre ne kadar ışık soğurduğudur; metanın miktarı değil, ama ona bağlıdır. Belirsizliği %10'dan büyük olanlar (çoğu sönük ya da komşusuyla karışmış) dışarıda bırakıldı. Ölçüm: her cisim için ~120 SPHEREx görüntüsü, r = 2 piksel açıklık fotometrisi.`;
+}
+function tablo(D){
+  let key="vtan", dir=-1;
+  const draw=()=>{
+    const q=$("ara").value.toLocaleLowerCase("tr"), f=$("filtre").value;
+    const L=D.yildizlar.filter(s=>(!q||s.ad.toLocaleLowerCase("tr").includes(q))
+      && (!f || (f==="hale"&&s.hale) || (f==="uyum"&&s.gaia_tip!=null&&Math.abs(s.sx_tip-s.gaia_tip)<=1) || (f==="fark"&&s.gaia_tip!=null&&Math.abs(s.sx_tip-s.gaia_tip)>1.5)))
+      .sort((a,b)=>{ const x=a[key], y=b[key]; return (x==null)-(y==null) || (typeof x==="string"?x.localeCompare(y,"tr"):(x-y))*dir; });
+    document.querySelector("#tablo tbody").innerHTML=L.map(s=>{
+      const d=s.gaia_tip!=null?Math.abs(s.sx_tip-s.gaia_tip):null;
+      const tags=[s.hale?'<span class="tag hale">hale adayı</span>':"", d!=null&&d<=1?'<span class="tag ok">Gaia ile uyumlu</span>':d!=null&&d>1.5?'<span class="tag mid">yöntemler ayrışıyor</span>':""].join(" ");
+      return `<tr data-href="${esc(link(s))}" style="cursor:pointer"><td><a href="${esc(link(s))}">${esc(s.ad)}</a></td><td class="n">${tipAd(s.sx_tip)}</td><td class="n">${tipAd(s.gaia_tip)}</td>`
+        +`<td class="n">${s.dist??"—"}</td><td class="n">${s.vtan??"—"}</td><td class="n">${s.w2??"—"}</td><td>${tags}</td></tr>`; }).join("");
+    document.querySelectorAll("#tablo tbody tr").forEach(tr=>tr.onclick=e=>{ if(e.target.tagName!=="A") location.href=tr.dataset.href; });
+    document.querySelectorAll("#tablo th[data-k]").forEach(th=>th.setAttribute("aria-sort", th.dataset.k===key?(dir>0?"ascending":"descending"):"none"));
+  };
+  document.querySelectorAll("#tablo th[data-k]").forEach(th=>th.onclick=()=>{ if(key===th.dataset.k) dir=-dir; else { key=th.dataset.k; dir=th.dataset.k==="ad"?1:-1; } draw(); });
+  $("ara").oninput=draw; $("filtre").onchange=draw; draw();
+}
+</script>
+</body>
+</html>

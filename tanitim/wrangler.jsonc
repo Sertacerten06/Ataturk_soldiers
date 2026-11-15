@@ -1,0 +1,7 @@
+{
+  // explain.arpama.tr · ArpaSphere tanıtım sayfası (yalnız statik dosyalar). Üret: python3 araclar/tanitim_uret.py · Yayın: cd tanitim && npx wrangler deploy
+  "name": "arpasphere-tanitim",
+  "compatibility_date": "2026-10-18",
+  "assets": { "directory": "./public" },
+  "routes": [ { "pattern": "explain.arpama.tr", "custom_domain": true } ]
+}
